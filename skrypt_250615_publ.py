@@ -627,11 +627,11 @@ if do_grid_search:
     with open(filename_pickl,"bw") as f:
         pickle.dump(res_bin, f)
         
-#%%
+#%% Wczytanie danych z ustawionym limitem temperatury na ssaniu
 data_UT1 = pd.read_csv('data_UT1_t-limit.csv')
 data_UT2 = pd.read_csv('data_UT2_t-limit.csv')
 data_UT3 = pd.read_csv('data_UT3_t-limit.csv')
-#%%   
+#%% Wczytanie danych bez limitu temperatury na ssaniu
 data_UT1 = pd.read_csv('data250707/data_UT1.csv')
 data_UT2 = pd.read_csv('data250707/data_UT2.csv')
 data_UT3 = pd.read_csv('data250707/data_UT3.csv')
