@@ -31,6 +31,9 @@ from sklearn.tree import DecisionTreeClassifier
 
 
 # %matplotlib qt
+pm = preproc.StandardScaler()
+smote = SMOTE()
+
 
 feat_map = {
              'Pressure - leak line':"$P_{leak}$",
@@ -161,12 +164,13 @@ def wyniki (models_pckl, models_csv, dataUT1, dataUT2, dataUT3, cols_x, col_y, t
     pm = preproc.StandardScaler()
     X_UT1, y_UT1 = prepareData(dataUT1, cols_x, col_y)
     # X_UT1 = pm.fit_transform(X_UT1)
+    _ = pm.fit_transform(X_UT1)
     # X_UT1, y_UT1 = smote.fit_resample(X_UT1, y_UT1)
 
     X_UT2, y_UT2 = prepareData(dataUT2,cols_x,col_y)
-    # X_UT2 = pm.transform(X_UT2)
+    X_UT2 = pm.transform(X_UT2)
     X_UT3, y_UT3 = prepareData(dataUT3,cols_x,col_y)
-    # X_UT3 = pm.transform(X_UT3)
+    X_UT3 = pm.transform(X_UT3)
     x_list = []
     x_list.append(('UT2',X_UT2,y_UT2))
     x_list.append(('UT3',X_UT3,y_UT3))
@@ -190,7 +194,7 @@ def wyniki (models_pckl, models_csv, dataUT1, dataUT2, dataUT3, cols_x, col_y, t
             # for j, name, score, params, sigma, model_n, a, b, c in models_list: 
             # for j, name, score, params, sigma, model_n, clmns, smot, bacc  in models_csv: 
             for number, mdl in enumerate(models_pckl):
-                name=str(mdl.best_estimator_._final_estimator).split('(')[0]
+                # name=str(mdl.best_estimator_._final_estimator).split('(')[0]
                 params=str(mdl.best_params_)
                 print(name,', th=',th)
                 # print(f"i={i}, j={j}")
@@ -228,17 +232,17 @@ def wyniki (models_pckl, models_csv, dataUT1, dataUT2, dataUT3, cols_x, col_y, t
     filename = folder_name+'/wyniki25_' + time_stamp + '.csv'
     res_df.to_csv(filename, sep=';')
     plt.close('all')
-    
-def wyniki_csv (models_csv, dataUT1, dataUT2, dataUT3, cols_x, col_y, th_list):
+
+def wyniki_dict (models, dataUT1, dataUT2, dataUT3, cols_x, col_y, th_list):
     # f_csv = pd.read_csv(gs_file_csv)   
     pm = preproc.StandardScaler()
     X_UT1, y_UT1 = prepareData(dataUT1, cols_x, col_y)
+    # X_UT1 = pm.fit_transform(X_UT1)
     X_UT1 = pm.fit_transform(X_UT1)
-    X_UT1, y_UT1 = smote.fit_resample(X_UT1, y_UT1)
+    # X_UT1, y_UT1 = smote.fit_resample(X_UT1, y_UT1)
 
     X_UT2, y_UT2 = prepareData(dataUT2,cols_x,col_y)
     X_UT2 = pm.transform(X_UT2)
-
     X_UT3, y_UT3 = prepareData(dataUT3,cols_x,col_y)
     X_UT3 = pm.transform(X_UT3)
     x_list = []
@@ -262,21 +266,25 @@ def wyniki_csv (models_csv, dataUT1, dataUT2, dataUT3, cols_x, col_y, th_list):
             # X = i[1][1]
             # y = i[1][2]
             # for j, name, score, params, sigma, model_n, a, b, c in models_list: 
-            for j, name, score, params, sigma, model, clmns, smot, bacc  in models_csv: 
-            # for number, mdl in enumerate(models_csv):
+            # for j, name, score, params, sigma, model_n, clmns, smot, bacc  in models_csv: 
+            # for number, name, mdl, params in models:
+                number = models['number']
+                name = models['name']
+                model = models['model']
+                params = models['params']
                 # name=str(mdl.best_estimator_._final_estimator).split('(')[0]
                 # params=str(mdl.best_params_)
                 print(name,', th=',th)
                 # print(f"i={i}, j={j}")
                 # print(i)
                 # print(x_list[i][0])
-                # model = mdl.best_estimator_
+                # model = mdl
                 print(f'Model fitting...')
                 model.fit(X_UT1,y_UT1)
                 print(f'Evaluating feat. import.')
-                evaluateFeatureImportances(model._final_estimator, X, y, np.array(cols_x), threshold=th, folder=folder_name, m_name=str(number)+'_'+name, data_name=xname)
+                evaluateFeatureImportances(model, X, y, np.array(cols_x), threshold=th, folder=folder_name, m_name=str(number)+'_'+name, data_name=xname)
                 print(f'Eval. model')
-                yp, ypp = evaluateModel(model._final_estimator, X, y, cols_x ,threshold=th, folder=folder_name, m_name=str(number)+'_'+name, data_name=xname)
+                yp, ypp = evaluateModel(model, X, y, cols_x ,threshold=th, folder=folder_name, m_name=str(number)+'_'+name, data_name=xname)
                 # yp = model.predict(X, y)
                 # ypp= model.predict_proba(X, y)
                 results_UT23.append({
@@ -301,7 +309,82 @@ def wyniki_csv (models_csv, dataUT1, dataUT2, dataUT3, cols_x, col_y, th_list):
     res_df = pd.DataFrame(results_UT23)
     filename = folder_name+'/wyniki25_' + time_stamp + '.csv'
     res_df.to_csv(filename, sep=';')
-    plt.close('all')
+    plt.close('all')    
+    
+#%%    
+# def wyniki_csv (models_csv, dataUT1, dataUT2, dataUT3, cols_x, col_y, th_list):
+#     # f_csv = pd.read_csv(gs_file_csv)   
+#     pm = preproc.StandardScaler()
+#     X_UT1, y_UT1 = prepareData(dataUT1, cols_x, col_y)
+#     X_UT1 = pm.fit_transform(X_UT1)
+#     X_UT1, y_UT1 = smote.fit_resample(X_UT1, y_UT1)
+
+#     X_UT2, y_UT2 = prepareData(dataUT2,cols_x,col_y)
+#     X_UT2 = pm.transform(X_UT2)
+
+#     X_UT3, y_UT3 = prepareData(dataUT3,cols_x,col_y)
+#     X_UT3 = pm.transform(X_UT3)
+#     x_list = []
+#     x_list.append(('UT2',X_UT2,y_UT2))
+#     x_list.append(('UT3',X_UT3,y_UT3))
+
+#     X = pd.DataFrame()
+#     y = pd.DataFrame()
+
+#     #*********************************************************
+#     #   WYNIKI !!!
+#     #*********************************************************
+#     time_stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+#     folder_name = './Wyniki '+time_stamp
+#     os.mkdir(folder_name)
+#     results_UT23 = []
+#     for th in th_list:
+#         for xname, X, y in x_list:
+#             # print(i[1][1])
+#             # print([i][0])
+#             # X = i[1][1]
+#             # y = i[1][2]
+#             # for j, name, score, params, sigma, model_n, a, b, c in models_list: 
+#             for j, name, score, params, sigma, model, clmns, smot, bacc  in models_csv: 
+#             # for number, mdl in enumerate(models_csv):
+#                 # name=str(mdl.best_estimator_._final_estimator).split('(')[0]
+#                 # params=str(mdl.best_params_)
+#                 print(name,', th=',th)
+#                 # print(f"i={i}, j={j}")
+#                 # print(i)
+#                 # print(x_list[i][0])
+#                 # model = mdl.best_estimator_
+#                 print(f'Model fitting...')
+#                 model.fit(X_UT1,y_UT1)
+#                 print(f'Evaluating feat. import.')
+#                 evaluateFeatureImportances(model._final_estimator, X, y, np.array(cols_x), threshold=th, folder=folder_name, m_name=str(number)+'_'+name, data_name=xname)
+#                 print(f'Eval. model')
+#                 yp, ypp = evaluateModel(model._final_estimator, X, y, cols_x ,threshold=th, folder=folder_name, m_name=str(number)+'_'+name, data_name=xname)
+#                 # yp = model.predict(X, y)
+#                 # ypp= model.predict_proba(X, y)
+#                 results_UT23.append({
+#                     "model name":f'{number}_{name}',
+#                     # "model name":str(mdl.estimator)
+#                     "acc":me.accuracy_score(y_true=y, y_pred=yp),
+#                     "bal_acc":me.balanced_accuracy_score(y_true=y, y_pred=yp),
+#                     "f1_macro":me.f1_score(y_true=y, y_pred=yp, average='macro'),
+#                     "recall_1":me.recall_score(y_true=y, y_pred=yp),                   
+#                     "report":me.classification_report(y_true=y, y_pred=yp),
+#                     "auc":roc_auc_score(y, ypp[:,1]),
+#                     # "params":params,
+#                     "params":params,
+#                     "data":xname,
+#                     "model":model,
+#                     "threshold":th,
+#                     "cols":cols_x
+#                     # "lag":lag,
+#                     # "mean":res.cv_results_['mean_test_score'][res.best_index_],
+#                 })
+#     # print(str(np.random.randn(1)))
+#     res_df = pd.DataFrame(results_UT23)
+#     filename = folder_name+'/wyniki25_' + time_stamp + '.csv'
+#     res_df.to_csv(filename, sep=';')
+#     plt.close('all')
 # %% Load data files
 fNames = ['dane_OT.csv',
           'dane_UT1.csv',
@@ -335,6 +418,10 @@ for i in range(len(dfs)):
             & (dfs[i]['Applied torque']<221)
             & (dfs[i]['Temperature - suction line']> temps[0].max()) 
             & (dfs[i]['Temperature - suction line']< temps[1].min()) 
+
+            # & (dfs[i]['Temperature - suction line']< temps[1].min()) 
+            # & (dfs[i]['Sensor1']< temps[1].min()) 
+            # & (dfs[i]['Temperature - suction line']< temps[1].min()) 
             ]
     dfs[i].dropna(inplace = True)
     dfs[i].drop_duplicates(inplace=True)
@@ -522,12 +609,18 @@ for i in range(0, len(list_of_dfs),3):
     df0test = pd.concat([df0test, list_of_dfs[i+2]])
     # i+=2
 #%%    
+
+
+
+# xdf = pd.DataFrame(X_UT1_std_scale)
+# plt.plot(data_UT1['stan']*10,',')
+
 plt.figure('train')
 plt.title('Train - temp na ssaniu')
-plt.plot(df0train['Temperature - suction line'],',')
-plt.figure('test')
-plt.title('Test - temp na ssaniu')
-plt.plot(df0test['Temperature - suction line'],',')
+# plt.plot(df0train['Temperature - suction line'],'.')
+# plt.plot(df0train['Flow - output'],'.')
+plt.plot(df0train['Flow - leak line'],'.')
+# plt.plot(df0train['Temperature - suction line'],'.')
 
 #%%
 
@@ -536,6 +629,17 @@ data_UT1 = pd.concat([
             dfs[1],
         ], axis=0)
 
+data_UT1 = data_UT1[data_UT1['Temp. diff']>0]
+data_UT1 = data_UT1[data_UT1['Flow - output']>55]
+data_UT1 = data_UT1[data_UT1['Sensor 1']<0.003]
+data_UT1 = data_UT1[data_UT1['Sensor 2']<0.0025]
+data_UT1 = data_UT1[data_UT1['Sensor 3']<0.01]
+           
+# temp diff <-8
+# flow_output < -4
+# sensor1 > 5
+# sensor2 > 5
+# sensor3 >5
 data_UT2 = pd.concat([
             df0test,
             dfs[2]
@@ -751,8 +855,7 @@ if do_grid_search:
 with open('res_dic.pickl',"bw") as f:
     pickle.dump(res_dic, f)
 
-with open('res_dic.pickl',"br") as f:
-    res_dic = pickle.load(f)
+
 #%%
 res_dic_2 = copy.deepcopy(res_dic)
 res_df = pd.DataFrame(res_dic_2)
@@ -763,22 +866,149 @@ mean_test_accuracy = np.mean(res_dic_2[0]['mean_test_accuracy'])
 mean_train_accuracy = np.mean(res_dic_2[0]['mean_train_accuracy'])
 mean_test_balanced_accuracy = np.mean(res_dic_2[0]['mean_test_balanced_accuracy'])
 #%%
-res_dic_3=copy.deepcopy(res_dic)
+with open('res_dic.pickl',"br") as f:
+    res_dic = pickle.load(f)
+    
+res_dic_2=copy.deepcopy(res_dic)
 for i,e in enumerate(res_dic):
     for k in res_dic[i]:
         if "mean_test" in k:
             # print(f'{k}: {np.mean(res_dic[i][k])}')
-            res_dic_3[i][str('_mean_'+k)] = np.mean(res_dic[i][k])
-        if "std_test" in k:
-            # print(f'{k}: {np.mean(res_dic_2[i][k])}')
-            res_dic_3[i][str('_mean_'+k)] = np.mean(res_dic[i][k])
-        # if ("split" in k) and ("test" in k):
-        #     print(f'{k}: {np.mean(res_dic[i][k])}')
-        #     res_dic_3[i][str('_mean_'+k)] = np.mean(res_dic[i][k])
-res_df = pd.DataFrame(res_dic_3)
-res_df.drop('params', axis=1, inplace=True)
-res_df.to_csv('res_mean_df.csv',sep=';')
+            res_dic_2[i][str('_mean_'+k)] = np.mean(res_dic[i][k])
+            res_dic_2[i][str('_min_'+k)] = np.min(res_dic[i][k])
             
+        # if "std_test" in k:
+        #     # print(f'{k}: {np.mean(res_dic_2[i][k])}')
+        #     res_dic_2[i][str('_mean_'+k)] = np.mean(res_dic[i][k])
+        if ("split" in k) and ("test" in k):
+            # print(f'{k}: {np.mean(res_dic[i][k])}')
+            # res_dic_2[i][str('_mean_'+k)] = np.mean(res_dic[i][k])
+            res_dic_2[i][str('_min_'+k)] = np.min(res_dic[i][k])
+#%%
+# res_df=[]
+# for i, ble in enumerate(res_dic):
+#     hg=[]
+keys = ["model",
+"score",
+# "params",
+# "lag":lag,
+# "mean":res.cv_results_['mean_test_score'][res.best_index_],
+# "std":res.cv_results_['std_test_score'][res.best_index_],
+# "cv_res":res.cv_results_,
+"best",
+"cols",
+# "Scoring":scoring,
+"SMOTED"]
+for k in res_dic[0]:
+    if "split" in k:
+        keys.append(k)
+#%%
+for i, eee in enumerate(res_dic):
+    # for k in keys:
+    #     del res_df[k]
+    nowy_slownik = {
+        klucz: wartosc
+        for klucz, wartosc in res_dic[i].items()
+        if klucz not in keys # Ważne: Sprawdzamy, czy klucz faktycznie istnieje w oryginalnym słowniku
+        }
+    plik = 'result_'+str(i)+'_'+res_dic[i]['model']+'.csv'
+    pd.DataFrame(nowy_slownik).to_csv(plik, sep=';')
+    
+#%% Cechy
+
+X_UT1_orig, y_UT1_orig = prepareData(data_UT1, cols, col_y)
+X_UT1 = pm.fit_transform(X_UT1_orig)
+# temp diff <-8
+# flow_output < -4
+# sensor1 > 5
+# sensor2 > 5
+# sensor3 >5
+
+X_UT1, y_UT1 = smote.fit_resample(X_UT1, y_UT1_orig)
+X_UT1_std_df = pd.DataFrame(X_UT1)
+X_UT1_orig_df = pd.DataFrame(X_UT1_orig)
+X_UT1_std_df = X_UT1_std_df.iloc[:,[1,2,3,4,5,6,7,8,9,10,11]]
+
+X_UT1_std_df['stan']=y_UT1
+
+folder='./_wykresy/'
+
+#%% Cechy
+for n in range(1, len(cols)-1):
+    plt.figure(cols[n], figsize=(16,8))
+    plt.title(cols[n])
+    plt.plot(data_UT1[data_UT1['stan']==0][cols[n]],'.', label='OT')
+    # plt.plot(dfs[1][dfs[1]['stan']==1][cols[n]],'.', label='OT')
+    plt.plot(data_UT1[data_UT1['stan']==1][cols[n]],'.', label='UT1')
+
+    # plt.plot(X_UT1_std_df[y_UT1==0][n],'x', label='OT')
+    # plt.plot(X_UT1_std_df[y_UT1==1][n],'.', label='UT1')
+    plt.legend()
+
+    fig_name=str(np.random.randn(1))
+    plt.savefig(folder+'cechy/'+cols[n]+fig_name+'.jpg')
+    plt.savefig(folder+'cechy/pdf/'+cols[n]+fig_name+'.pdf')
+    # plt.savefig(folder+'/'+fig_name+'.pdf')
+    plt.close()
+    
+#%% Pary
+for x in range(1, len(cols)-1):
+    for y in range(x+1, len(cols)-1):
+        plt.figure(cols[x]+'-'+cols[y], figsize=(10,8))
+        plt.title(cols[x]+'-'+cols[y])
+           
+        plt.xlabel(cols[x]) # Etykieta osi X
+        plt.ylabel(cols[y]) # Etykieta osi Y
+        plt.scatter(X_UT1_std_df[y_UT1==0][x], X_UT1_std_df[y_UT1==0][y], label='OT')
+        plt.scatter(X_UT1_std_df[y_UT1==1][x], X_UT1_std_df[y_UT1==1][y], label='UT1', alpha=0.3, marker='x')
+        plt.legend()
+        fig_name=str(np.random.randn(1))
+        plt.savefig(folder+'/pary/'+cols[x]+cols[y]+fig_name+'.jpg')
+        plt.savefig(folder+'/pary/'+cols[x]+cols[y]+fig_name+'.pdf')
+        # plt.savefig(folder+'/'+fig_name+'.pdf')
+        plt.close()
+#%% Histogramy
+from scipy.stats import gaussian_kde # Do estymacji KDE
+for n in range(1, len(cols)-1):
+    dane=[]
+    plt.figure(cols[n], figsize=(10,8))
+    plt.title(cols[n])
+    # plt.plot(data_UT1[data_UT1['stan']==0][cols[n]],'.')
+    # plt.plot(data_UT1[data_UT1['stan']==1][cols[n]],'.')
+    
+    dane.append([X_UT1_std_df[y_UT1==0][n], 'green', 'OT'])
+    dane.append([X_UT1_std_df[y_UT1==1][n], 'orange', 'UT1'])
+    
+    # dane.append([X_UT1_orig_df[y_UT1_orig==0][cols[n]], 'green', 'OT'])
+    # dane.append([X_UT1_orig_df[y_UT1_orig==1][cols[n]], 'orange', 'UT1'])
+    for d, color, lbl in dane:
+        kde = gaussian_kde(d)
+        x_plot = np.linspace(d.min(), d.max(), 500)
+        y_plot = kde(x_plot)
+        plt.plot(x_plot, y_plot, color=color, linewidth=2, label=lbl)
+        # plt.hist(d, bins=200, density=True, color='purple', alpha=0.2, label=lbl)
+
+    # plt.show()
+    # plt.figure()
+    # plt.hist(X_UT1_std_df[y_UT1==0][n],bins=200, histtype='step', label='OT')
+    # plt.hist(X_UT1_std_df[y_UT1==1][n],bins=200, histtype='step', label='UT1')
+    plt.legend()
+    fig_name=str(np.random.randn(1))
+    plt.savefig(folder+'/histogramy/hist_'+cols[n]+fig_name+'.jpg')
+    plt.savefig(folder+'/histogramy/hist_'+cols[n]+fig_name+'.pdf')
+    # plt.savefig(folder+'/'+fig_name+'.pdf')
+    plt.close()
+       
+#%% Seaborn
+import seaborn as sns
+# _ = sns.pairplot(df1, hue='stan', palette='Set1', markers=['.'])
+dfddd = X_UT1_orig_df.iloc[:,[1,2,3,4,12]]
+dfddd = X_UT1_std_df.iloc[:,[1,2,3,4,11]]
+                          
+_ = sns.pairplot(X_UT1_std_df.iloc[:,[1,2,3,4,11]], hue='stan', palette='Set1', markers=['.'])
+_ = sns.pairplot(X_UT1_std_df.iloc[:,[5,6,7,8]], hue=y_UT1[1], palette='Set1', markers=['.'])
+_ = sns.pairplot(X_UT1_std_df.iloc[:,[9,10,11]], hue=y_UT1[1], palette='Set1', markers=['.'])
+
 #%%
 data_UT1 = pd.read_csv('data_UT1_t-limit.csv')
 data_UT2 = pd.read_csv('data_UT2_t-limit.csv')
@@ -806,8 +1036,7 @@ print(df0test['Temperature - suction line'].min(),
       dfs[0]['Temperature - suction line'].min()
       )
 
-#%%
-smote = SMOTE()
+#%% Ładowanie modeli z plików
 # time_stamp='2025-06-20_194958'     
 time_stamp='2025-07-21_061152'
 
@@ -816,6 +1045,47 @@ filename_pickl = 'grid_search_results_' + time_stamp + '.pickl'
 models_csv = pd.read_csv(filename_csv, sep=';').values.tolist()
 with open(filename_pickl,"br") as f_pckl:
     models_pckl = pickle.load(f_pckl)
+#%% Ładowanie modeli z plików 2
+
+filename_csv = '../res_df.csv'
+filename_pickl = '../res_dic.pickl'
+models_csv = pd.read_csv(filename_csv, sep=';').values.tolist()
+with open(filename_pickl,"br") as f_pckl:
+    models_pckl = pickle.load(f_pckl)
+
+# rank_f1_macro = True
+rank_f1_macro = False
+
+params = []
+models = []
+indx_list =[11, 22, 4, 649, 3, 22, 65, 192] # Najlepsze modele MLP GS_rank f1_macro+acc+bacc
+
+for n, mdl in enumerate(models_pckl):
+    if rank_f1_macro:
+        indx = np.where(mdl['rank_test_f1_macro']==1)[0][0]
+        model = mdl['best'],
+        params = mdl['params'][indx]
+    else:
+        indx = indx_list[n]
+        params = mdl['params'][indx]
+        if mdl['SMOTED']=='True':
+            model = make_pipeline(pm, smote, MLPClassifier())
+        else:
+            model = make_pipeline(pm, MLPClassifier())
+            # params = mdl['params'][indx]
+            # model.set_params(**params)
+        model.set_params(**params)
+    models.append({
+        "number":n,
+        "name":'MLP',
+        "model": model,
+        "params":params,
+        "cols":mdl['cols']
+            })
+    # models_pckl[n]['best_params_']=(models_pckl[n]['params'][indeks])
+    # models_pckl[n]['best_estimator_']=(models_pckl[n]['best'])
+    
+    # param = models_pckl[0]['best']
 #%%
 # wybrane = [2,5,8,11,34,45]
 
@@ -825,11 +1095,13 @@ with open(filename_pickl,"br") as f_pckl:
 
 
 th_list=[0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
-wyniki(models_pckl, models_csv, data_UT1, data_UT2, data_UT3, cols_list[0], col_y, th_list=th_list)
+# wyniki(models_pckl, models_csv, data_UT1, data_UT2, data_UT3, cols_list[0], col_y, th_list=th_list)
+for model in models:
+    wyniki_dict(model, data_UT1, data_UT2, data_UT3, model['cols'], col_y, th_list=th_list)
 # wyniki_csv(models_csv, data_UT1, data_UT2, data_UT3, cols_x, col_y, th_list=th_list)
 
 # th_list=[0.5]
-wyniki(models_pckl, models_csv, data_UT1, data_UT2, data_UT3, cols_list[1], col_y, th_list=th_list)
+# wyniki(models_pckl, models_csv, data_UT1, data_UT2, data_UT3, cols_list[1], col_y, th_list=th_list)
 # wyniki([models_pckl[20], models_pckl[26]], [models_csv[20], models_csv[26]], data_UT1, data_UT2, data_UT3, cols_list[1], col_y, th_list=th_list)
 
 # plt.plot(model.loss_curve_)

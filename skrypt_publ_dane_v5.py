@@ -185,18 +185,19 @@ df0test = dfs[0][dfs[0]['Time'].str.contains('2024-01-04')]
 #%% Wykres temperatury df0train i df0est
 
 plt.figure('Train/test')
-plt.title('Train/test - temp na ssaniu')
+# plt.title('Train/test - temp na ssaniu')
+plt.title('Dataset OT - oil temperature in suction line')
 # plt.plot(df0train['Temperature - suction line'],'.')
 # plt.plot(df0train['Flow - output'],'.')
 # plt.plot(df0train['Flow - leak line'],'.')
-plt.plot(df0test['Temperature - suction line'],'.', color='blue', label='test')
-plt.plot(df0train['Temperature - suction line'],'.', color='orange', label='train')
+plt.plot(df0test['Temperature - suction line'],'.', color='blue', label='OT_test')
+plt.plot(df0train['Temperature - suction line'],'.', color='orange', label='OT_train')
 plt.legend()
 
 #%% Tworzenie zbiorów UT1...UT3
 # dft=dfs[1].sample(round(df0train.shape[0]*0.48))
 # dft=dfs[1].sample(round(df0train.shape[0]*0.25))
-dft=dfs[1].sample(round(df0train.shape[0]*0.10))
+dft=dfs[1].sample(round(df0train.shape[0]*.01))
 dft = dft.sort_index()
 data_UT1 = pd.concat([
             df0train,
@@ -312,6 +313,10 @@ plt.close('all')
 # data_UT2.to_csv('data_UT2_v5.csv')
 # data_UT3.to_csv('data_UT3_v5.csv')
 
+# data_UT1.to_csv('data_UT1_v5_100.csv')
+# data_UT1.to_csv('data_UT1_v5_005.csv')
+
 # data_UT1.to_csv('data_UT1_v5_025.csv')
 # data_UT1.to_csv('data_UT1_v5_010.csv')
+# data_UT1.to_csv('data_UT1_v5_001.csv')
 # modelsdf.to_csv('models.csv', sep=';')
