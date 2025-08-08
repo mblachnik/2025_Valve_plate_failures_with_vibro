@@ -1,0 +1,5 @@
+__pycache__/
+.venv
+pyzefir.egg-info
+.vscode/*
+.idea/*
