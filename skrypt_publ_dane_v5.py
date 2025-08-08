@@ -11,10 +11,12 @@ import matplotlib.pyplot as plt
 # import copy
 
 
-
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 
 # %matplotlib qt
-
+percent=1
 cols =  [
          'Applied torque',
          'Pressure - leak line', #2
@@ -139,7 +141,7 @@ torque = pd.DataFrame()
 
 for f in fNames:
 
-    df = pd.read_csv('data250505/' + f)
+    df = pd.read_csv('data/data250505/' + f)
     temps = pd.concat([temps,pd.DataFrame(([(df["Temperature - suction line"].min(), df["Temperature - suction line"].max())]))])
     # fleak = pd.concat([fleak,pd.DataFrame(([(df["Flow - leak line"].min(), df["Flow - leak line"].max())]))])  # print(f, ' temp min - ', df['Temperature - suction line'].min())
     # torque = pd.concat([torque,pd.DataFrame(([(df["Applied torque"].min(), df["Applied torque"].max())]))])  # print(f, ' temp min - ', df['Temperature - suction line'].min())
@@ -193,11 +195,12 @@ plt.title('Dataset OT - oil temperature in suction line')
 plt.plot(df0test['Temperature - suction line'],'.', color='blue', label='OT_test')
 plt.plot(df0train['Temperature - suction line'],'.', color='orange', label='OT_train')
 plt.legend()
+plt.show()
 
 #%% Tworzenie zbiorów UT1...UT3
 # dft=dfs[1].sample(round(df0train.shape[0]*0.48))
 # dft=dfs[1].sample(round(df0train.shape[0]*0.25))
-dft=dfs[1].sample(round(df0train.shape[0]*.01))
+dft=dfs[1].sample(round(df0train.shape[0]*percent))
 dft = dft.sort_index()
 data_UT1 = pd.concat([
             df0train,
@@ -239,7 +242,7 @@ print('\nData UT3: \n', data_UT3['stan'].value_counts(sort=False))
 # plt.plot(data_UT1.index, data_UT1['stan']*200,'.')
 
 #%% Wykresy cech
-%matplotlib qt
+#%matplotlib qt
 # folder=''
 plt.figure('Cechy',figsize=(12,8))
 
@@ -320,3 +323,7 @@ plt.close('all')
 # data_UT1.to_csv('data_UT1_v5_010.csv')
 # data_UT1.to_csv('data_UT1_v5_001.csv')
 # modelsdf.to_csv('models.csv', sep=';')
+#%%
+data_UT1.to_csv(f'data/mb/data1_{percent*100}.csv',index=False)
+data_UT2.to_csv('data/mb/data2.csv',index=False)
+data_UT3.to_csv('data/mb/data3.csv',index=False)
