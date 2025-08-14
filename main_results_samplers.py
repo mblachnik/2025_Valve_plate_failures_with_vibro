@@ -2,6 +2,8 @@
 import pandas as pd
 import numpy as np
 import sklearn
+import matplotlib
+
 from sklearn.metrics import get_scorer
 from sklearn.preprocessing import StandardScaler
 from imblearn.pipeline import make_pipeline
@@ -9,11 +11,12 @@ from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import KNeighborsClassifier
 from imblearn.over_sampling import SMOTE
-import matplotlib
 
+from scipy.integrate import simpson
+from scipy.stats import rankdata
 
-
-matplotlib.use('TkAgg')
+matplotlib.use('qtagg')
+# %matplotlib qt
 import matplotlib.pyplot as plt
 #%% Read results file
 #List of models to display
@@ -50,6 +53,8 @@ res = df.loc[max_indices].reset_index(drop=True)
 
 #%% Plot results
 
+area = []
+
 #For each dataset
 for i,col_y in enumerate(["f1_macro_mean","f1_macro_UT2", "f1_macro_UT3"]):
     plt.figure(i, clear=True)
@@ -59,8 +64,37 @@ for i,col_y in enumerate(["f1_macro_mean","f1_macro_UT2", "f1_macro_UT3"]):
     for model in models:
         #Get subset of sample for a given sampler
         m = res[res["Sampler_type"] == model]
-        #Plot the results
-        plt.plot(m.loc[:,col_x], m.loc[:,col_y],label = model)
+        #Plot the results and calculate area under curve
+        # m.drop(m[m['percent']==1].index, inplace=True)
+        x = m.loc[:,col_x]
+        y = m.loc[:,col_y]
+        plt.plot(x, y, label = f'{model}')
+        area.append({
+            "dataset f1":col_y,
+            "model":m['Sampler_type'][m.index.min()],
+            # "area trapeze":np.trapz(y, x),
+            "area simpson":simpson(y, x),
+            })
     plt.legend()
     plt.show()
 
+area_df = pd.DataFrame(area)
+area_df.to_csv('results/areas_under_curves.csv')
+
+rank_results = []
+for col_y in area_df['dataset f1'].unique().tolist():
+    area_df.loc[area_df['dataset f1']==col_y,col_y+'_rank'] = rankdata(-area_df.loc[area_df['dataset f1']==col_y]['area simpson'], method='average',)
+
+for model in models:
+    r1 = area_df.loc[area_df["model"] == model, 'f1_macro_mean_rank'].max()
+    r2 = area_df.loc[area_df["model"] == model, 'f1_macro_UT2_rank'].max()
+    r3 = area_df.loc[area_df["model"] == model, 'f1_macro_UT3_rank'].max()
+    rank_results.append({
+            'model': model,
+            'UT1 rank': r1,
+            'UT2 rank': r2,
+            'UT3 rank': r3,
+            'average rank': np.mean([r1,r2,r3])
+        })
+r_res_df = pd.DataFrame(rank_results)
+r_res_df.to_csv('results/ranks.csv')

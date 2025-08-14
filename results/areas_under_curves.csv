@@ -1,0 +1,31 @@
+,dataset f1,model,area simpson,f1_macro_mean_rank,f1_macro_UT2_rank,f1_macro_UT3_rank
+0,f1_macro_mean,SMOTEENN,0.9944902108521073,3.0,,
+1,f1_macro_mean,no Sampler,0.994060332302748,7.0,,
+2,f1_macro_mean,SMOTETomek,0.9944327396733661,4.0,,
+3,f1_macro_mean,ADASYN,0.49463486694600445,10.0,,
+4,f1_macro_mean,TomekLinks,0.9939817590809916,8.0,,
+5,f1_macro_mean,BorderlineSMOTE,0.9946277036050994,2.0,,
+6,f1_macro_mean,EditedNearestNeighbours,0.9943502550736875,5.0,,
+7,f1_macro_mean,RandomUnderSampler,0.9923891136512355,9.0,,
+8,f1_macro_mean,RandomOverSampler,0.9941535463535809,6.0,,
+9,f1_macro_mean,SMOTE,0.9946577883521717,1.0,,
+10,f1_macro_UT2,SMOTEENN,0.8616872075107846,,8.0,
+11,f1_macro_UT2,no Sampler,0.8631996647181892,,5.5,
+12,f1_macro_UT2,SMOTETomek,0.8663418661844432,,3.0,
+13,f1_macro_UT2,ADASYN,0.41324645383237124,,10.0,
+14,f1_macro_UT2,TomekLinks,0.8631996647181892,,5.5,
+15,f1_macro_UT2,BorderlineSMOTE,0.8691131732370121,,1.0,
+16,f1_macro_UT2,EditedNearestNeighbours,0.8622676657230539,,7.0,
+17,f1_macro_UT2,RandomUnderSampler,0.8561118048020192,,9.0,
+18,f1_macro_UT2,RandomOverSampler,0.8666227722379793,,2.0,
+19,f1_macro_UT2,SMOTE,0.8662739899743104,,4.0,
+20,f1_macro_UT3,SMOTEENN,0.6935443253252271,,,9.0
+21,f1_macro_UT3,no Sampler,0.6945586286144527,,,7.5
+22,f1_macro_UT3,SMOTETomek,0.7003156522500408,,,4.0
+23,f1_macro_UT3,ADASYN,0.3300504052802164,,,10.0
+24,f1_macro_UT3,TomekLinks,0.6945586286144527,,,7.5
+25,f1_macro_UT3,BorderlineSMOTE,0.7167291419541492,,,1.0
+26,f1_macro_UT3,EditedNearestNeighbours,0.6970302926131204,,,5.0
+27,f1_macro_UT3,RandomUnderSampler,0.7148375969815774,,,2.0
+28,f1_macro_UT3,RandomOverSampler,0.7009299626273857,,,3.0
+29,f1_macro_UT3,SMOTE,0.694711289390018,,,6.0
