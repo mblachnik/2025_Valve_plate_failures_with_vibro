@@ -80,7 +80,7 @@ for i,col_y in enumerate(["f1_macro_mean","f1_macro_UT2", "f1_macro_UT3"]):
 area_df = pd.DataFrame(area)
 
 rank_results = []
-for col_y in area_df['dataset f1'].unique().tolist():
+for col_y in ["f1_macro_mean","f1_macro_UT2", "f1_macro_UT3"]:
     area_df.loc[area_df['dataset f1']==col_y,col_y+'_rank'] = rankdata(-area_df.loc[area_df['dataset f1']==col_y]['area simpson'], method='average',)
 
 for model in models:
