@@ -1,3 +1,5 @@
+#%%
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -6,8 +8,7 @@ from sklearn.metrics import get_scorer
 from sklearn.preprocessing import StandardScaler
 from imblearn.pipeline import make_pipeline
 from sklearn.base import clone
-from sklearn.ensemble import IsolationForest
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 
 percent = 1
 
@@ -49,20 +50,18 @@ y3 = df3.loc[:, 'stan']
 random_state=21
 
 model = make_pipeline(
-    StandardScaler(),
-           KNeighborsClassifier(n_neighbors=20)
-           #sklearn.neural_network.MLPClassifier(hidden_layer_sizes=(40,20), max_iter=500, random_state=random_state)
-)
+                StandardScaler(),
+                       MLPClassifier(hidden_layer_sizes=(40,20), max_iter=500, random_state=random_state)
+                      )
 
 cv = sklearn.model_selection.StratifiedKFold(n_splits=5, shuffle=False)#, random_state=random_state)
 res = []
-for i in [1]:
+for i in [0.005,0.01,0.03,0.05,0.1,0.25,0.5,1]:
     idr = (y1[(y1 == 1)].sample(int((y1 == 1).sum() * i), random_state=random_state)).sort_index()
     idr = pd.concat([idr, y1[y1 == 0]])
     Xt = X1.loc[idr.index, :]
     yt = y1.loc[idr.index]
-    scores = sklearn.model_selection.cross_validate(model,Xt,yt, cv=cv,scoring=['f1_macro','balanced_accuracy'],n_jobs=4)
-
+    scores = sklearn.model_selection.cross_validate(model,Xt,yt, cv=cv,scoring=['f1_macro','balanced_accuracy'],n_jobs=10)
     model_t = clone(model)
     model_t.fit(Xt,yt)
     y2p = model_t.predict(X2)
