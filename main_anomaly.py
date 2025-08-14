@@ -152,7 +152,9 @@ if detect_failure_states: #
     y2 = swap_labels(y2)  # To check if failure states are similar
     y3 = swap_labels(y3) #To check if failure states are similar
 
-Xtr = X1.loc[y1==0, :]
+yid = y1==0
+ytr = y1[yid]
+Xtr = X1.loc[yid, :]
 model.fit(Xtr)
 
 #%% Make prediction
@@ -315,7 +317,7 @@ def pca_classification_pipeline(X, y, class_names=None):
 
     return X_pca
 
-def umap_classification_pipeline(X, y, class_names=None):
+def umap_classification_pipeline(X, y, class_names=None, X2=None, y2=None):
     """
     Complete UMAP visualization pipeline for classification data
 
@@ -333,11 +335,12 @@ def umap_classification_pipeline(X, y, class_names=None):
 
     print(f"High dimensional data ({X.shape[1]} features). Applying UMAP...")
     umap_viz = umap.UMAP(n_components=2,
-                         n_neighbors=30,  # Number of neighbors (5-50)
-                         min_dist=0.1,  # Minimum distance between points
+                         n_neighbors=10,  # Number of neighbors (5-50)
+                         min_dist=0.05,  # Minimum distance between points
                          metric='euclidean',  # Distance metric
                          random_state=42,
                          )
+
     X_umap = umap_viz.fit_transform(X_scaled)
 
     # Step 4: Visualization
@@ -349,11 +352,22 @@ def umap_classification_pipeline(X, y, class_names=None):
     else:
         palette = sns.color_palette("husl", len(np.unique(y)))
 
-    for i, class_label in enumerate(np.unique(y)):
-        mask = y == class_label
-        label_name = class_names[i] if class_names else f'Class {class_label}'
-        plt.scatter(X_umap[mask, 0], X_umap[mask, 1],
-                    c=[palette[i]], label=label_name, alpha=0.7, s=50)
+    # for i, class_label in enumerate(np.unique(y)):
+    #     mask = y == class_label
+    #     label_name = class_names[i] if class_names else f'Class {class_label}'
+    #     if mask.sum():
+    #         plt.scatter(X_umap[mask, 0], X_umap[mask, 1],
+    #                 c=[palette[i]], label=label_name, alpha=0.7, s=50)
+
+    if X2 is not None:
+        X2_scalled = scaler.transform(X2)
+        X2_umap = umap_viz.transform(X2_scalled)
+        for i, class_label in enumerate(np.unique(y2)):
+            mask = y2 == class_label
+            label_name = class_names[i] if class_names else f'Class {class_label}'
+            if mask.sum():
+                plt.scatter(X2_umap[mask, 0], X2_umap[mask, 1],
+                        c=[palette[i]], label=label_name, alpha=0.7, s=50)
 
     plt.title('UMAP Visualization of Classification Data')
     plt.xlabel('UMAP Component 1')
@@ -377,5 +391,103 @@ tsne_classification_pipeline(X, y,["normal","f1","f2","f3"])
 pca_classification_pipeline(X, y,["normal","f1","f2","f3"])
 
 #%% Visualization UMAP
-umap_classification_pipeline(X, y,["normal","f1","f2","f3"])
+y[y==0]=4
+umap_classification_pipeline(X, y,["f1","f2","f3","normal"],X,y)
 
+#%%
+from scipy.spatial.distance import pdist, squareform
+from sklearn.metrics.pairwise import pairwise_distances
+import pandas as pd
+from scipy import stats
+def analyze_distance_distribution(X, metric='euclidean', sample_size=None, title="Dataset"):
+    """
+    Analyze and visualize the distribution of pairwise distances in dataset X
+
+    Parameters:
+    X: array-like, shape (n_samples, n_features)
+        Your dataset
+    metric: str, distance metric to use
+        'euclidean', 'manhattan', 'cosine', 'chebyshev', etc.
+    sample_size: int or None
+        If dataset is large, sample this many points to avoid memory issues
+    title: str, title for plots
+    """
+
+    ss = StandardScaler()
+    X = ss.fit_transform(X)
+    # Handle large datasets by sampling
+    if sample_size and len(X) > sample_size:
+        print(f"Large dataset detected ({len(X)} samples). Sampling {sample_size} points...")
+        idx = np.random.choice(len(X), sample_size, replace=False)
+        X_sample = X[idx]
+    else:
+        X_sample = X
+        sample_size = len(X)
+
+    print(f"Analyzing distances for {len(X_sample)} data points with {X.shape[1]} features")
+    print(f"Using {metric} distance metric")
+
+    # Calculate pairwise distances
+    print("Computing pairwise distances...")
+    if metric in ['euclidean', 'manhattan', 'chebyshev', 'minkowski']:
+        distances = pdist(X_sample, metric=metric)
+    else:
+        # Use sklearn for more exotic metrics
+        distance_matrix = pairwise_distances(X_sample, metric=metric)
+        # Extract upper triangle (avoid duplicates and self-distances)
+        distances = distance_matrix[np.triu_indices_from(distance_matrix, k=1)]
+
+    # Basic statistics
+    print(f"\nDistance Statistics ({metric}):")
+    print(f"Number of pairwise distances: {len(distances):,}")
+    print(f"Mean distance: {np.mean(distances):.4f}")
+    print(f"Std distance: {np.std(distances):.4f}")
+    print(f"Min distance: {np.min(distances):.4f}")
+    print(f"Max distance: {np.max(distances):.4f}")
+    print(f"Median distance: {np.median(distances):.4f}")
+
+    # Create comprehensive visualization
+    fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+
+    # 1. Histogram of distances
+    axes[0, 0].hist(distances, bins=50, density=True, alpha=0.7, color='skyblue', edgecolor='black')
+    axes[0, 0].axvline(np.mean(distances), color='red', linestyle='--', label=f'Mean: {np.mean(distances):.3f}')
+    axes[0, 0].axvline(np.median(distances), color='orange', linestyle='--',
+                       label=f'Median: {np.median(distances):.3f}')
+    axes[0, 0].set_xlabel(f'{metric.capitalize()} Distance')
+    axes[0, 0].set_ylabel('Density')
+    axes[0, 0].set_title(f'{title}: Distance Distribution')
+    axes[0, 0].legend()
+    axes[0, 0].grid(True, alpha=0.3)
+
+    # 2. Box plot
+    axes[0, 1].boxplot(distances, vert=True, patch_artist=True,
+                       boxprops=dict(facecolor='lightblue', alpha=0.7))
+    axes[0, 1].set_ylabel(f'{metric.capitalize()} Distance')
+    axes[0, 1].set_title(f'{title}: Distance Box Plot')
+    axes[0, 1].grid(True, alpha=0.3)
+
+    # 3. Q-Q plot to check normality
+    stats.probplot(distances, dist="norm", plot=axes[1, 0])
+    axes[1, 0].set_title(f'{title}: Q-Q Plot (Normal Distribution)')
+    axes[1, 0].grid(True, alpha=0.3)
+
+    # 4. Cumulative distribution
+    sorted_distances = np.sort(distances)
+    cumulative = np.arange(1, len(sorted_distances) + 1) / len(sorted_distances)
+    axes[1, 1].plot(sorted_distances, cumulative, linewidth=2)
+    axes[1, 1].set_xlabel(f'{metric.capitalize()} Distance')
+    axes[1, 1].set_ylabel('Cumulative Probability')
+    axes[1, 1].set_title(f'{title}: Cumulative Distribution')
+    axes[1, 1].grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+    # Additional statistics
+    percentiles = [10, 25, 50, 75, 90, 95, 99]
+    print(f"\nPercentiles:")
+    for p in percentiles:
+        print(f"{p}th percentile: {np.percentile(distances, p):.4f}")
+
+    return distances
